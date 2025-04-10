@@ -51,6 +51,7 @@ import {
   $isTextNode,
   DecoratorNode,
   ElementNode,
+  HISTORY_MERGE_TAG,
   LineBreakNode,
 } from '.';
 import {
@@ -555,7 +556,7 @@ export function markNodesWithTypesAsDirty(
     },
     editor._pendingEditorState === null
       ? {
-          tag: 'history-merge',
+          tag: HISTORY_MERGE_TAG,
         }
       : undefined,
   );
@@ -911,8 +912,15 @@ export function isDeleteLineBackward(key: string, metaKey: boolean): boolean {
   return IS_APPLE && metaKey && isBackspace(key);
 }
 
-export function isDeleteLineForward(key: string, metaKey: boolean): boolean {
-  return IS_APPLE && metaKey && isDelete(key);
+export function isDeleteLineForward(
+  key: string,
+  metaKey: boolean,
+  ctrlKey: boolean,
+): boolean {
+  return (
+    IS_APPLE &&
+    ((metaKey && isDelete(key)) || (ctrlKey && key.toLowerCase() === 'k'))
+  );
 }
 
 export function isDeleteBackward(
@@ -1958,7 +1966,7 @@ export function $cloneWithProperties<T extends LexicalNode>(latestNode: T): T {
       mutableNode.__parent === latestNode.__parent &&
         mutableNode.__next === latestNode.__next &&
         mutableNode.__prev === latestNode.__prev,
-      "$cloneWithProperties: %s.clone(node) (with type '%s') overrided afterCloneFrom but did not call super.afterCloneFrom(prevNode)",
+      "$cloneWithProperties: %s.clone(node) (with type '%s') overrode afterCloneFrom but did not call super.afterCloneFrom(prevNode)",
       constructor.name,
       constructor.getType(),
     );
@@ -1971,7 +1979,7 @@ export function setNodeIndentFromDOM(
   elementNode: ElementNode,
 ) {
   const indentSize = parseInt(elementDom.style.paddingInlineStart, 10) || 0;
-  const indent = indentSize / 40;
+  const indent = Math.round(indentSize / 40);
   elementNode.setIndent(indent);
 }
 
